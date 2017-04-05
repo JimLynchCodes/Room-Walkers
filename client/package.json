@@ -1,0 +1,15 @@
+{
+  "name": "roomo-walker-client",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jim Lynch",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "require": "^2.4.20",
+    "ws": "^2.2.3"
+  }
+}
