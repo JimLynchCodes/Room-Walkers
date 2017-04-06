@@ -5,21 +5,17 @@ var TopDownGame = TopDownGame || {};
 // const ws = new WebSocket('ws://104.196.54.87:443');
 // const ws = new WebSocket('ws://120.0.0.1:443');
 
+var player;
+var oldX;
+var oldY;
 
-
-
-
-//title screen
-TopDownGame.Game = function(){};
-
-// var
 
 function connectToServer() {
+  var ws = new WebSocket('ws://127.0.0.1:8889');
 
   console.log('connecting to server...');
 
-    var ws = new WebSocket('ws://127.0.0.1:8889');
-console.log('browser socket is: ' + ws);
+  console.log('browser socket is: ' + ws);
 
   ws.onconnection = function () {
 
@@ -27,28 +23,57 @@ console.log('browser socket is: ' + ws);
 
   };
 
-    ws.onconnection = function () {
+  ws.onconnection = function () {
 
-        console.log('connected to server!')
+    console.log('connected to server!')
 
-    };
+  };
 
-    ws.onopen = function () {
+  ws.onopen = function () {
 
-        console.log('connected to server!')
-      ws.send(JSON.stringify({type:"USER_JOIN"}));
+    console.log('connected to server!')
+    ws.send(JSON.stringify({type:"USER_JOIN"}));
 
-    };
+  };
 
-    ws.addEventListener('message', function (event) {
-        console.log('Message from server', event.data);
-    });
+  ws.addEventListener('message', function (event) {
+    console.log('Message from server', event.data);
+    console.log('Message type from server', JSON.parse(event.data));
 
+
+    switch(JSON.parse(event.data).type) {
+      case 'USER_JOINED': {
+        player.y = JSON.parse(event.data).yPos;
+        player.x = JSON.parse(event.data).xPos;
+        console.log('putting player at x:' + player.x + " and y:" + player.y);
+
+        break;
+      }
+
+      case 'PLAYER_MOVED': {
+        player.y = JSON.parse(event.data).payload.yPos;
+        player.x = JSON.parse(event.data).payload.xPos;
+        console.log('putting player at x:' + player.x + " and y:" + player.y);
+
+        break;
+      }
+    }
+
+
+  });
+
+  return ws;
 }
 
+//title screen
+TopDownGame.Game = function(){};
+var myWs;
 
 TopDownGame.Game.prototype = {
   create: function() {
+
+    myWs = connectToServer();
+
     this.map = this.game.add.tilemap('level1');
 
     //the first parameter is the tileset name as specified in Tiled, the second is the key to the asset
@@ -65,15 +90,17 @@ TopDownGame.Game.prototype = {
     this.backgroundlayer.resizeWorld();
 
     this.createItems();
-    this.createDoors();    
+    this.createDoors();
 
     //create player
-    var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer')
+    var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer');
+
     this.player = this.game.add.sprite(result[0].x, result[0].y, 'player');
     this.game.physics.arcade.enable(this.player);
+    player = this.player;
 
 
-    console.log('player x: ' + this.player.x + " y: " + this.player.y);
+    // console.log('player x: ' + this.player.x + " y: " + this.player.y);
 
     //the camera will follow the player in the world
     this.game.camera.follow(this.player);
@@ -81,7 +108,8 @@ TopDownGame.Game.prototype = {
     //move player with cursor keys
     this.cursors = this.game.input.keyboard.createCursorKeys();
 
-    connectToServer();
+
+
 
   },
   createItems: function() {
@@ -138,18 +166,25 @@ TopDownGame.Game.prototype = {
     this.player.body.velocity.y = 0;
     this.player.body.velocity.x = 0;
 
+
     if(this.cursors.up.isDown) {
       this.player.body.velocity.y -= 50;
+      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
     }
     else if(this.cursors.down.isDown) {
       this.player.body.velocity.y += 50;
+      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
     }
     if(this.cursors.left.isDown) {
       this.player.body.velocity.x -= 50;
+      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
     }
     else if(this.cursors.right.isDown) {
       this.player.body.velocity.x += 50;
+      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
     }
+    oldX = this.player.body.x;
+    oldY = this.player.body.y;
   },
   collect: function(player, collectable) {
     console.log('yummy!');
