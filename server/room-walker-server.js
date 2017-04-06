@@ -7,7 +7,8 @@ var connections = [];
 
 console.log('server listening...');
 
-var MOVE_AMOUNT = 50;
+const MOVE_AMOUNT = 5;
+const currentPlayer = {xPos: 100, yPos: 270, name:"Jim"};
 
 wss.on('connection', function connection(ws) {
 
@@ -38,53 +39,78 @@ wss.on('connection', function connection(ws) {
         switch (JSON.parse(message).type) {
 
 
-            case 'USER_JOIN': {
+            // case 'USER_JOIN': {
+            //
+            //     console.log('sending...');
+            //
+            //     ws.send(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}));
+            //     // return broadcast(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}))
+            //     break;
+            //
+            // }
 
-                console.log('sending...');
 
-                ws.send(JSON.stringify({word:"hello"}));
-                return broadcast(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}))
-            }
-
-            case 'PLAYER_MOVED':
-            {
-
-                console.log('player : ' + " " + " wants to move: " + message.payload.direction);
-
-                var currentPlayer = getCurrentPlayerFromWsConnection(ws);
-
-                if (message.payload.direction === 1) {
-
-                    console.log('updating player position!');
-
-                    switch (message.payload.direction) {
-                        case 0:
-                        {
-                            currentPlayer.yPos -= MOVE_AMOUNT;
-
-                        }
-                        case 1:
-                        {
-                            currentPlayer.xPos += MOVE_AMOUNT;
-
-                        }
-                        case 2:
-                        {
-                            currentPlayer.xPos -= MOVE_AMOUNT;
-
-                        }
-                        case 3:
-                        {
-                            currentPlayer.yPos += MOVE_AMOUNT;
-
-                        }
+            case 'PLAYER_MOVE': {
+                ws.send(JSON.stringify({type:'PLAYER_MOVED',
+                    payload: {
+                    name: "Jim",
+                    xPos: JSON.parse(message).payload.xPos,
+                    yPos: JSON.parse(message).payload.yPos}
                     }
+                ));
 
-                    return broadcast({ type: "PLAYER_MOVED", payload: { player: currentPlayer } });
-
-                }
             }
-        }
+            // case 'PLAYER_MOVE':
+            // {
+            //
+            //
+            //     console.log('got stuff: ' + message);
+            //     console.log('player : ' + " " + " wants to move: " + JSON.parse(message).payload.direction);
+            //
+            //     // var currentPlayer = getCurrentPlayerFromWsConnection(ws);
+            //
+            //
+            //
+            //         console.log('updating player position! ' + MOVE_AMOUNT);
+            //
+            //         switch (JSON.parse(message).payload.direction) {
+            //             case 0:
+            //             {
+            //                 currentPlayer.yPos -= MOVE_AMOUNT;
+            //
+            //                 break;
+            //             }
+            //             case 1:
+            //             {
+            //                 // console.log('adding some! ' + currentPlayer.xPos);
+            //                 currentPlayer.xPos += MOVE_AMOUNT;
+            //                 // console.log('adding some! ' + currentPlayer.xPos);
+            //                 break;
+            //
+            //             }
+            //             case 2:
+            //             {
+            //                 currentPlayer.yPos += MOVE_AMOUNT;
+            //
+            //                 break;
+            //             }
+            //             case 3:
+            //             {
+            //                 console.log('changing y');
+            //                 currentPlayer.xPos -= MOVE_AMOUNT;
+            //                 break;
+            //
+            //             }
+            //             default: {
+            //                 console.log('couldn\'t find direction: ' + JSON.parse(message).payload.direction);
+            //             }
+            //         }
+            //
+            //         return broadcast({ type: "PLAYER_MOVED", payload: { player: currentPlayer.name, xPos:currentPlayer.xPos, yPos:currentPlayer.yPos }});
+            //
+            //     }
+            }
+
 
     });
 
@@ -104,13 +130,15 @@ wss.on('connection', function connection(ws) {
 function getCurrentPlayerFromWsConnection(ws) {
     for (var i = 0; i < connections.length; i++) {
         if (connections[i].ws === ws) {
-            currentPlayer = connections[i];
+            return connections[i];
         }
     }
 }
 
 broadcast = function (messageObj) {
     for (var i = 0; i < connections.length; i++) {
-        connections[i].ws.send(messageObj);
+
+        console.log('sending message!');
+        connections[i].ws.send(JSON.stringify(messageObj));
     }
 };
