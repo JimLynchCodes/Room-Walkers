@@ -5,7 +5,9 @@ var TopDownGame = TopDownGame || {};
 // const ws = new WebSocket('ws://104.196.54.87:443');
 // const ws = new WebSocket('ws://120.0.0.1:443');
 
-var ws = new WebSocket('ws://120.0.0.1:8889');
+
+
+
 
 //title screen
 TopDownGame.Game = function(){};
@@ -16,17 +18,31 @@ function connectToServer() {
 
   console.log('connecting to server...');
 
-  ws.on('connection', function open() {
+    var ws = new WebSocket('ws://127.0.0.1:8889');
+console.log('browser socket is: ' + ws);
 
-    console.log('connected to server!')
+  ws.onconnection = function () {
 
-  });
-
-  ws.onmessage = function incoming(data, flags) {
-
-    console.log('got a message! ' + JSON.stringify(data));
+    console.log('connecting to server still...')
 
   };
+
+    ws.onconnection = function () {
+
+        console.log('connected to server!')
+
+    };
+
+    ws.onopen = function () {
+
+        console.log('connected to server!')
+      ws.send(JSON.stringify({type:"USER_JOIN"}));
+
+    };
+
+    ws.addEventListener('message', function (event) {
+        console.log('Message from server', event.data);
+    });
 
 }
 
@@ -55,6 +71,9 @@ TopDownGame.Game.prototype = {
     var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer')
     this.player = this.game.add.sprite(result[0].x, result[0].y, 'player');
     this.game.physics.arcade.enable(this.player);
+
+
+    console.log('player x: ' + this.player.x + " y: " + this.player.y);
 
     //the camera will follow the player in the world
     this.game.camera.follow(this.player);
