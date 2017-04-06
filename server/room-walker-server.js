@@ -11,6 +11,7 @@ var MOVE_AMOUNT = 50;
 
 wss.on('connection', function connection(ws) {
 
+    console.log('someone connected!')
     connections.push({
         ws: ws,
         name: "",
@@ -20,12 +21,30 @@ wss.on('connection', function connection(ws) {
         directionFacing: 0
     });
 
+    // ws.send(JSON.stringify({type:'CONNECTION_INIT', x: 50, y:270}));
+
+    ws.on('open', function () {
+        console.log('websocket opened');
+    })
+
+
     ws.on('message', function incoming(message, flags) {
 
 
-        console.log('received a message of type: ' + message.type);
+        console.log('received a message of type: ' + message);
 
-        switch (message.type) {
+        console.log('parsed type: ' + JSON.parse(message).type);
+
+        switch (JSON.parse(message).type) {
+
+
+            case 'USER_JOIN': {
+
+                console.log('sending...');
+
+                ws.send(JSON.stringify({word:"hello"}));
+                return broadcast(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}))
+            }
 
             case 'PLAYER_MOVED':
             {
@@ -61,7 +80,7 @@ wss.on('connection', function connection(ws) {
                         }
                     }
 
-                    broadcast({ type: "PLAYER_MOVED", payload: { player: currentPlayer } });
+                    return broadcast({ type: "PLAYER_MOVED", payload: { player: currentPlayer } });
 
                 }
             }
