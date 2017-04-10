@@ -8,191 +8,284 @@ var TopDownGame = TopDownGame || {};
 var player;
 var oldX;
 var oldY;
-
+var ws;
+var game;
+var players = [];
+var thisUsersName = "--";
 
 function connectToServer() {
-  var ws = new WebSocket('ws://127.0.0.1:8889');
+    ws = new WebSocket('ws://127.0.0.1:8889');
 
-  console.log('connecting to server...');
+    console.log('connecting to server...');
 
-  console.log('browser socket is: ' + ws);
+    console.log('browser socket is: ' + ws);
 
-  ws.onconnection = function () {
+    ws.onconnection = function () {
 
-    console.log('connecting to server still...')
+        console.log('connecting to server still...')
 
-  };
+    };
 
-  ws.onconnection = function () {
+    ws.onconnection = function () {
 
-    console.log('connected to server!')
+        console.log('connected to server!')
 
-  };
+    };
 
-  ws.onopen = function () {
+    ws.onopen = function () {
 
-    console.log('connected to server!')
-    ws.send(JSON.stringify({type:"USER_JOIN"}));
+        console.log('connected to server!')
+        // ws.send(JSON.stringify({type: "USER_JOIN"}));
 
-  };
+    };
 
-  ws.addEventListener('message', function (event) {
-    console.log('Message from server', event.data);
-    console.log('Message type from server', JSON.parse(event.data));
-
-
-    switch(JSON.parse(event.data).type) {
-      case 'USER_JOINED': {
-        player.y = JSON.parse(event.data).yPos;
-        player.x = JSON.parse(event.data).xPos;
-        console.log('putting player at x:' + player.x + " and y:" + player.y);
-
-        break;
-      }
-
-      case 'PLAYER_MOVED': {
-        player.y = JSON.parse(event.data).payload.yPos;
-        player.x = JSON.parse(event.data).payload.xPos;
-        console.log('putting player at x:' + player.x + " and y:" + player.y);
-
-        break;
-      }
-    }
+    ws.addEventListener('message', function (event) {
+        console.log('Message from server', JSON.parse(event.data));
+        console.log('Message type from server' + JSON.parse(event.data).type);
 
 
-  });
+        switch (JSON.parse(event.data).type) {
+            case 'USER_JOINED': {
+                // player.y = JSON.parse(event.data).yPos;
+                // player.x = JSON.parse(event.data).xPos;
 
-  return ws;
+
+                console.log('user joined name: ' + JSON.parse(event.data).payload.name);
+                var userAlreadyJoined = false;
+
+                for (var i = 0; i < players.length; i++) {
+                    if (players[i].name === JSON.parse(event.data).payload.name) {
+                        userAlreadyJoined = true;
+                    }
+                }
+
+                if (!userAlreadyJoined) {
+
+                    console.log('player should be at : ' + JSON.parse(event.data).payload.xPos +
+                        ' and y: ' + JSON.parse(event.data).payload.yPos);
+
+                    var newPlayer = game.add.sprite(JSON.parse(event.data).payload.xPos, JSON.parse(event.data).payload.yPos, 'player');
+                    game.physics.arcade.enable(newPlayer);
+                    newPlayer.name = JSON.parse(event.data).payload.name;
+                    players.push(newPlayer);
+
+
+                    console.log('1: ' + newPlayer.name + " 2: " + thisUsersName);
+
+                    if (newPlayer.name === thisUsersName) {
+
+                        console.log('player is me!');
+                    // TODO - If the player that joined is this useris this user
+                        //the camera will follow the player in the world
+                        game.camera.follow(newPlayer);
+                        player = newPlayer;
+
+                    }
+
+
+                    console.log('putting player at x:' + newPlayer.x + " and y:" + newPlayer.y);
+                }
+
+
+                // player = player;
+
+                break;
+            }
+
+            case 'PLAYER_MOVED': {
+
+                console.log('user moved name: ' + JSON.parse(event.data).payload.name);
+
+                console.log('looping over ' + players.length + " players");
+
+                for (var i = 0; i < players.length; i++) {
+                    if (players[i].name === JSON.parse(event.data).payload.name) {
+                        // userAlreadyJoined = true;
+
+                        players[i].y = JSON.parse(event.data).payload.yPos;
+                        players[i].x = JSON.parse(event.data).payload.xPos;
+                console.log('putting player at x:' + players[i].body.x + " and y:" + players[i].body.y);
+
+
+
+                    }
+                }
+
+
+
+                break;
+            }
+        }
+
+
+    });
+
+    return ws;
 }
 
 //title screen
-TopDownGame.Game = function(){};
+TopDownGame.Game = function () {
+};
 var myWs;
 
 TopDownGame.Game.prototype = {
-  create: function() {
+    create: function () {
 
-    myWs = connectToServer();
+        myWs = connectToServer();
 
-    this.map = this.game.add.tilemap('level1');
+        this.map = this.game.add.tilemap('level1');
 
-    //the first parameter is the tileset name as specified in Tiled, the second is the key to the asset
-    this.map.addTilesetImage('tiles', 'gameTiles');
+        //the first parameter is the tileset name as specified in Tiled, the second is the key to the asset
+        this.map.addTilesetImage('tiles', 'gameTiles');
 
-    //create layer
-    this.backgroundlayer = this.map.createLayer('backgroundLayer');
-    this.blockedLayer = this.map.createLayer('blockedLayer');
+        //create layer
+        this.backgroundlayer = this.map.createLayer('backgroundLayer');
+        this.blockedLayer = this.map.createLayer('blockedLayer');
 
-    //collision on blockedLayer
-    this.map.setCollisionBetween(1, 100000, true, 'blockedLayer');
+        //collision on blockedLayer
+        this.map.setCollisionBetween(1, 100000, true, 'blockedLayer');
 
-    //resizes the game world to match the layer dimensions
-    this.backgroundlayer.resizeWorld();
+        //resizes the game world to match the layer dimensions
+        this.backgroundlayer.resizeWorld();
 
-    this.createItems();
-    this.createDoors();
+        this.createItems();
+        this.createDoors();
 
-    //create player
-    var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer');
+        //create player
+        var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer');
 
-    this.player = this.game.add.sprite(result[0].x, result[0].y, 'player');
-    this.game.physics.arcade.enable(this.player);
-    player = this.player;
-
-
-    // console.log('player x: ' + this.player.x + " y: " + this.player.y);
-
-    //the camera will follow the player in the world
-    this.game.camera.follow(this.player);
-
-    //move player with cursor keys
-    this.cursors = this.game.input.keyboard.createCursorKeys();
+        // player = this.game.add.sprite(result[0].x, result[0].y, 'player');
+        // this.game.physics.arcade.enable(player);
+        // player = player;
 
 
+        // console.log('player x: ' + player.x + " y: " + player.y);
 
 
-  },
-  createItems: function() {
-    //create items
-    this.items = this.game.add.group();
-    this.items.enableBody = true;
-    var item;    
-    result = this.findObjectsByType('item', this.map, 'objectsLayer');
-    result.forEach(function(element){
-      this.createFromTiledObject(element, this.items);
-    }, this);
-  },
-  createDoors: function() {
-    //create doors
-    this.doors = this.game.add.group();
-    this.doors.enableBody = true;
-    result = this.findObjectsByType('door', this.map, 'objectsLayer');
+        //move player with cursor keys
+        this.cursors = this.game.input.keyboard.createCursorKeys();
 
-    result.forEach(function(element){
-      this.createFromTiledObject(element, this.doors);
-    }, this);
-  },
+        game = this.game;
 
-  //find objects in a Tiled layer that containt a property called "type" equal to a certain value
-  findObjectsByType: function(type, map, layer) {
-    var result = new Array();
-    map.objects[layer].forEach(function(element){
-      if(element.properties.type === type) {
-        //Phaser uses top left, Tiled bottom left so we have to adjust
-        //also keep in mind that the cup images are a bit smaller than the tile which is 16x16
-        //so they might not be placed in the exact position as in Tiled
-        element.y -= map.tileHeight;
-        result.push(element);
-      }      
-    });
-    return result;
-  },
-  //create a sprite from an object
-  createFromTiledObject: function(element, group) {
-    var sprite = group.create(element.x, element.y, element.properties.sprite);
+    },
+    createItems: function () {
+        //create items
+        this.items = this.game.add.group();
+        this.items.enableBody = true;
+        var item;
+        result = this.findObjectsByType('item', this.map, 'objectsLayer');
+        result.forEach(function (element) {
+            this.createFromTiledObject(element, this.items);
+        }, this);
+    },
+    createDoors: function () {
+        //create doors
+        this.doors = this.game.add.group();
+        this.doors.enableBody = true;
+        result = this.findObjectsByType('door', this.map, 'objectsLayer');
 
-      //copy all properties to the sprite
-      Object.keys(element.properties).forEach(function(key){
-        sprite[key] = element.properties[key];
-      });
-  },
-  update: function() {
-    //collision
-    this.game.physics.arcade.collide(this.player, this.blockedLayer);
-    this.game.physics.arcade.overlap(this.player, this.items, this.collect, null, this);
-    this.game.physics.arcade.overlap(this.player, this.doors, this.enterDoor, null, this);
+        result.forEach(function (element) {
+            this.createFromTiledObject(element, this.doors);
+        }, this);
+    },
 
-    //player movement
-    this.player.body.velocity.y = 0;
-    this.player.body.velocity.x = 0;
+    //find objects in a Tiled layer that containt a property called "type" equal to a certain value
+    findObjectsByType: function (type, map, layer) {
+        var result = new Array();
+        map.objects[layer].forEach(function (element) {
+            if (element.properties.type === type) {
+                //Phaser uses top left, Tiled bottom left so we have to adjust
+                //also keep in mind that the cup images are a bit smaller than the tile which is 16x16
+                //so they might not be placed in the exact position as in Tiled
+                element.y -= map.tileHeight;
+                result.push(element);
+            }
+        });
+        return result;
+    },
+    //create a sprite from an object
+    createFromTiledObject: function (element, group) {
+        var sprite = group.create(element.x, element.y, element.properties.sprite);
+
+        //copy all properties to the sprite
+        Object.keys(element.properties).forEach(function (key) {
+            sprite[key] = element.properties[key];
+        });
+    },
+    update: function () {
+        if (player) {
+            //collision
+            this.game.physics.arcade.collide(player, this.blockedLayer);
+            this.game.physics.arcade.overlap(player, this.items, this.collect, null, this);
+            this.game.physics.arcade.overlap(player, this.doors, this.enterDoor, null, this);
+
+            //player movement
+            player.body.velocity.y = 0;
+            player.body.velocity.x = 0;
 
 
-    if(this.cursors.up.isDown) {
-      this.player.body.velocity.y -= 50;
-      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
-    }
-    else if(this.cursors.down.isDown) {
-      this.player.body.velocity.y += 50;
-      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
-    }
-    if(this.cursors.left.isDown) {
-      this.player.body.velocity.x -= 50;
-      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
-    }
-    else if(this.cursors.right.isDown) {
-      this.player.body.velocity.x += 50;
-      myWs.send(JSON.stringify({type:"PLAYER_MOVE", payload: {direction: 1, xPos:this.player.body.x, yPos:this.player.body.y}}));
-    }
-    oldX = this.player.body.x;
-    oldY = this.player.body.y;
-  },
-  collect: function(player, collectable) {
-    console.log('yummy!');
+            if (this.cursors.up.isDown) {
+                player.body.velocity.y -= 50;
+                myWs.send(JSON.stringify({
+                    type: "PLAYER_MOVE",
+                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
+                }));
+            }
+            else if (this.cursors.down.isDown) {
+                player.body.velocity.y += 50;
+                myWs.send(JSON.stringify({
+                    type: "PLAYER_MOVE",
+                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
+                }));
+            }
+            if (this.cursors.left.isDown) {
+                player.body.velocity.x -= 50;
+                myWs.send(JSON.stringify({
+                    type: "PLAYER_MOVE",
+                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
+                }));
+            }
+            else if (this.cursors.right.isDown) {
+                player.body.velocity.x += 50;
+                myWs.send(JSON.stringify({
+                    type: "PLAYER_MOVE",
+                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
+                }));
+            }
+            oldX = player.body.x;
+            oldY = player.body.y;
+        }
+    },
+    collect: function (player, collectable) {
+        console.log('yummy!');
 
-    //remove sprite
-    collectable.destroy();
-  },
-  enterDoor: function(player, door) {
-    console.log('entering door that will take you to '+door.targetTilemap+' on x:'+door.targetX+' and y:'+door.targetY);
-  },
+        //remove sprite
+        collectable.destroy();
+    },
+    enterDoor: function (player, door) {
+        console.log('entering door that will take you to ' + door.targetTilemap + ' on x:' + door.targetX + ' and y:' + door.targetY);
+    },
 };
+
+console.log('ok then');
+
+setTimeout(function () {
+
+    addListeners();
+}, 100)
+
+function addListeners() {
+    console.log('in here!');
+
+    document.getElementById("charInputBtn").addEventListener("click", function () {
+
+        var inputText = document.getElementById("charNameInput").value;
+
+        thisUsersName = inputText;
+        console.log('user wants to playw ith name: ' + inputText);
+
+        ws.send(JSON.stringify({type: "PLAYER_JOIN", payload: {name: inputText}}));
+    });
+};
+
+
