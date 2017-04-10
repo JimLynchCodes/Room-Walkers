@@ -22,11 +22,11 @@ wss.on('connection', function connection(ws) {
         directionFacing: 0
     });
 
-    // ws.send(JSON.stringify({type:'CONNECTION_INIT', x: 50, y:270}));
+    var players = [];
 
     ws.on('open', function () {
         console.log('websocket opened');
-    })
+    });
 
 
     ws.on('message', function incoming(message, flags) {
@@ -38,80 +38,46 @@ wss.on('connection', function connection(ws) {
 
         switch (JSON.parse(message).type) {
 
-
-            // case 'USER_JOIN': {
-            //
-            //     console.log('sending...');
-            //
-            //     ws.send(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}));
-            //     // return broadcast(JSON.stringify({type:'USER_JOINED', xPos: 100, yPos: 270}))
-            //     break;
-            //
-            // }
-
-
             case 'PLAYER_MOVE': {
-                ws.send(JSON.stringify({type:'PLAYER_MOVED',
+                broadcast(JSON.stringify({type:'PLAYER_MOVED',
                     payload: {
-                    name: "Jim",
+                    name: JSON.parse(message).payload.name,
                     xPos: JSON.parse(message).payload.xPos,
-                    yPos: JSON.parse(message).payload.yPos}
-                    }
+                    yPos: JSON.parse(message).payload.yPos,
+                    direction: JSON.parse(message).payload.direction
+                    }}
                 ));
 
-            }
-            // case 'PLAYER_MOVE':
-            // {
-            //
-            //
-            //     console.log('got stuff: ' + message);
-            //     console.log('player : ' + " " + " wants to move: " + JSON.parse(message).payload.direction);
-            //
-            //     // var currentPlayer = getCurrentPlayerFromWsConnection(ws);
-            //
-            //
-            //
-            //         console.log('updating player position! ' + MOVE_AMOUNT);
-            //
-            //         switch (JSON.parse(message).payload.direction) {
-            //             case 0:
-            //             {
-            //                 currentPlayer.yPos -= MOVE_AMOUNT;
-            //
-            //                 break;
-            //             }
-            //             case 1:
-            //             {
-            //                 // console.log('adding some! ' + currentPlayer.xPos);
-            //                 currentPlayer.xPos += MOVE_AMOUNT;
-            //                 // console.log('adding some! ' + currentPlayer.xPos);
-            //                 break;
-            //
-            //             }
-            //             case 2:
-            //             {
-            //                 currentPlayer.yPos += MOVE_AMOUNT;
-            //
-            //                 break;
-            //             }
-            //             case 3:
-            //             {
-            //                 console.log('changing y');
-            //                 currentPlayer.xPos -= MOVE_AMOUNT;
-            //                 break;
-            //
-            //             }
-            //             default: {
-            //                 console.log('couldn\'t find direction: ' + JSON.parse(message).payload.direction);
-            //             }
-            //         }
-            //
-            //         return broadcast({ type: "PLAYER_MOVED", payload: { player: currentPlayer.name, xPos:currentPlayer.xPos, yPos:currentPlayer.yPos }});
-            //
-            //     }
+                break;
             }
 
 
+            case 'PLAYER_JOIN': {
+                var newPlayerName = JSON.parse(message).payload.name;
+                console.log('a user joined: ' + newPlayerName);
+
+                // players.push(newPlayerName)
+
+                for (var i = 0; i < connections.length; i++) {
+                if (connections[i].ws === ws) {
+                    connections[i].name = JSON.parse(message).payload.name;
+                }
+
+
+                    console.log('## Player: ' + connections[i].name);
+                }
+
+
+
+  		broadcast(JSON.stringify({type:"USER_JOINED", payload: {name: newPlayerName,
+            xPos:35, yPos: 25}}));
+
+            // ws.send(JSON.stringify({type:"USER_JOINED", payload: {name:"Jim", xPos:45, yPos: 50}}));
+
+            break;
+            }
+
+        }
     });
 
     ws.on('close', function (a, b) {
@@ -138,7 +104,7 @@ function getCurrentPlayerFromWsConnection(ws) {
 broadcast = function (messageObj) {
     for (var i = 0; i < connections.length; i++) {
 
-        console.log('sending message!');
-        connections[i].ws.send(JSON.stringify(messageObj));
+        console.log('sending message! ' + messageObj);
+        connections[i].ws.send(messageObj);
     }
 };
