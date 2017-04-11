@@ -66,8 +66,14 @@ function connectToServer() {
 
                     var newPlayer = game.add.sprite(JSON.parse(event.data).payload.xPos, JSON.parse(event.data).payload.yPos, 'player');
                     game.physics.arcade.enable(newPlayer);
+                    // newPlayer.pivot.y.setTo(0, 0.5);
+                    // newPlayer.pivot.x.setTo(0, 0.5);
                     newPlayer.name = JSON.parse(event.data).payload.name;
                     players.push(newPlayer);
+                    // newPlayer.body.anchor.setTo(0.5, 0.5);
+
+                    // newPlayer.pivot.y = newPlayerewPlayer.height * .5;
+                    // newPlayer.pivot.x = newPlayerewPlayer.height * .5;
 
 
                     console.log('1: ' + newPlayer.name + " 2: " + thisUsersName);
@@ -99,6 +105,7 @@ function connectToServer() {
                 console.log('looping over ' + players.length + " players");
 
                 for (var i = 0; i < players.length; i++) {
+                console.log('looping over ' + players[i].name + " players" + JSON.parse(event.data).payload.name);
                     if (players[i].name === JSON.parse(event.data).payload.name) {
                         // userAlreadyJoined = true;
 
@@ -111,6 +118,27 @@ function connectToServer() {
                     }
                 }
 
+
+
+                break;
+            }
+
+            case "USERS_ALREADY_HERE": {
+
+
+                console.log('handling USERS_ALREADY_HERE: ' + JSON.parse(event.data).payload);
+                console.log('length: ' + JSON.parse(event.data).payload.otherPlayers.length);
+
+
+                for (var i = 0; i < JSON.parse(event.data).payload.otherPlayers.length; i++) {
+
+                    var newPlayer = game.add.sprite(JSON.parse(event.data).payload.otherPlayers[i].xPos,
+                        JSON.parse(event.data).payload.otherPlayers[i].yPos, 'player');
+                    game.physics.arcade.enable(newPlayer);
+                    newPlayer.name = JSON.parse(event.data).payload.otherPlayers[i].name;
+                    players.push(newPlayer);
+
+                }
 
 
                 break;
@@ -240,6 +268,7 @@ TopDownGame.Game.prototype = {
             }
             if (this.cursors.left.isDown) {
                 player.body.velocity.x -= 50;
+                // player.scale.x = -1;
                 myWs.send(JSON.stringify({
                     type: "PLAYER_MOVE",
                     payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
@@ -247,6 +276,7 @@ TopDownGame.Game.prototype = {
             }
             else if (this.cursors.right.isDown) {
                 player.body.velocity.x += 50;
+                // player.scale.x = 1;
                 myWs.send(JSON.stringify({
                     type: "PLAYER_MOVE",
                     payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}

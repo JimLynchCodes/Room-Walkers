@@ -39,6 +39,17 @@ wss.on('connection', function connection(ws) {
         switch (JSON.parse(message).type) {
 
             case 'PLAYER_MOVE': {
+
+                for (var i = 0; i < connections.length; i++) {
+                    if (connections[i].ws === ws) {
+
+                        console.log('updating user');
+                        connections[i].xPos = JSON.parse(message).payload.xPos;
+                        connections[i].yPos = JSON.parse(message).payload.yPos;
+                        connections[i].direction = JSON.parse(message).payload.direction;
+                    }
+                }
+
                 broadcast(JSON.stringify({type:'PLAYER_MOVED',
                     payload: {
                     name: JSON.parse(message).payload.name,
@@ -55,26 +66,38 @@ wss.on('connection', function connection(ws) {
             case 'PLAYER_JOIN': {
                 var newPlayerName = JSON.parse(message).payload.name;
                 console.log('a user joined: ' + newPlayerName);
-
-                // players.push(newPlayerName)
+                var playersAlreadyHere = [];
 
                 for (var i = 0; i < connections.length; i++) {
-                if (connections[i].ws === ws) {
-                    connections[i].name = JSON.parse(message).payload.name;
+                    if (connections[i].ws === ws) {
+                        connections[i].name = JSON.parse(message).payload.name;
+                        connections[i].xPos = 35;
+                        connections[i].yPos = 95;
+
+                    } else {
+
+                        console.log("## connection: " + connections[i]);
+                        console.log("## connection: " + connections[i].name);
+
+                        playersAlreadyHere.push({
+                            name: connections[i].name,
+                            xPos: connections[i].xPos,
+                            yPos: connections[i].yPos,
+                            directionFacing: connections[i].directionFacing,
+                            score: connections[i].score,
+                        });
+                    }
                 }
 
+                if (playersAlreadyHere.length > 0) {
 
-                    console.log('## Player: ' + connections[i].name);
+                    console.log('sending USERS_ALREADY_HERE ' + JSON.stringify(playersAlreadyHere));
+                    ws.send(JSON.stringify({type: "USERS_ALREADY_HERE", payload: {otherPlayers: playersAlreadyHere}}))
                 }
 
+                broadcast(JSON.stringify({type: "USER_JOINED", payload: {name: newPlayerName, xPos: 35, yPos: 95}}));
 
-
-  		broadcast(JSON.stringify({type:"USER_JOINED", payload: {name: newPlayerName,
-            xPos:35, yPos: 25}}));
-
-            // ws.send(JSON.stringify({type:"USER_JOINED", payload: {name:"Jim", xPos:45, yPos: 50}}));
-
-            break;
+                break;
             }
 
         }
