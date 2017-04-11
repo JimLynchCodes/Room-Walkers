@@ -12,6 +12,7 @@ var ws;
 var game;
 var players = [];
 var thisUsersName = "--";
+var currentDirection = 1;
 
 function connectToServer() {
     ws = new WebSocket('ws://127.0.0.1:8889');
@@ -69,6 +70,7 @@ function connectToServer() {
                     // newPlayer.pivot.y.setTo(0, 0.5);
                     // newPlayer.pivot.x.setTo(0, 0.5);
                     newPlayer.name = JSON.parse(event.data).payload.name;
+                        newPlayer.anchor.setTo(0.5, 0.5);
                     players.push(newPlayer);
                     // newPlayer.body.anchor.setTo(0.5, 0.5);
 
@@ -113,6 +115,11 @@ function connectToServer() {
                         players[i].x = JSON.parse(event.data).payload.xPos;
                 console.log('putting player at x:' + players[i].body.x + " and y:" + players[i].body.y);
 
+                        if (JSON.parse(event.data).payload.direction === 2) {
+                            players[i].scale.x = 1;
+                        } else if (JSON.parse(event.data).payload.direction === 4) {
+                            players[i].scale.x = -1;
+                        }
 
 
                     }
@@ -135,11 +142,35 @@ function connectToServer() {
                     var newPlayer = game.add.sprite(JSON.parse(event.data).payload.otherPlayers[i].xPos,
                         JSON.parse(event.data).payload.otherPlayers[i].yPos, 'player');
                     game.physics.arcade.enable(newPlayer);
+                    newPlayer.anchor.setTo(0.5, 0.5);
                     newPlayer.name = JSON.parse(event.data).payload.otherPlayers[i].name;
                     players.push(newPlayer);
 
+                    if (JSON.parse(event.data).payload.otherPlayers[i].directionFacing === 2) {
+                        newPlayer.scale.x = 1;
+                    } else if (JSON.parse(event.data).payload.otherPlayers[i].directionFacing === 4) {
+
+                       console.log('should be flipping...');
+                        newPlayer.scale.x = -1;
+                    }
+
                 }
 
+
+                break;
+            }
+
+            case "PLAYER_QUIT": {
+
+                console.log('yes, the player quit: ' + JSON.parse(event.data).payload.name);
+
+                for (var i =0; i < players.length; i++) {
+                    if (players[i].name === JSON.parse(event.data).payload.name) {
+                        console.log('destroying user! ' + players[i].name);
+                        players[i].destroy();
+                        players[i].splice(i, 1);
+                    }
+                }
 
                 break;
             }
@@ -247,43 +278,52 @@ TopDownGame.Game.prototype = {
             this.game.physics.arcade.overlap(player, this.items, this.collect, null, this);
             this.game.physics.arcade.overlap(player, this.doors, this.enterDoor, null, this);
 
+
             //player movement
             player.body.velocity.y = 0;
             player.body.velocity.x = 0;
 
 
-            if (this.cursors.up.isDown) {
-                player.body.velocity.y -= 50;
+            if (player.x !== oldX || player.y != oldY) {
+
                 myWs.send(JSON.stringify({
                     type: "PLAYER_MOVE",
-                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
+                    payload: {direction: currentDirection, xPos: player.x, yPos: player.y, name: thisUsersName}
                 }));
+
+                oldX = player.x;
+                oldY = player.y;
+            }
+
+
+            if (this.cursors.up.isDown) {
+                player.body.velocity.y -= 50;
+                currentDirection = 1;
+
             }
             else if (this.cursors.down.isDown) {
                 player.body.velocity.y += 50;
-                myWs.send(JSON.stringify({
-                    type: "PLAYER_MOVE",
-                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
-                }));
+                currentDirection = 3;
+
             }
             if (this.cursors.left.isDown) {
                 player.body.velocity.x -= 50;
-                // player.scale.x = -1;
-                myWs.send(JSON.stringify({
-                    type: "PLAYER_MOVE",
-                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
-                }));
+                player.scale.x = -1;
+                // myWs.send(JSON.stringify({
+                //     type: "PLAYER_MOVE",
+                //     payload: {direction: 1, xPos: player.x, yPos: player.y, name: thisUsersName}
+                // }));
+                currentDirection = 4;
             }
             else if (this.cursors.right.isDown) {
                 player.body.velocity.x += 50;
-                // player.scale.x = 1;
-                myWs.send(JSON.stringify({
-                    type: "PLAYER_MOVE",
-                    payload: {direction: 1, xPos: player.body.x, yPos: player.body.y, name: thisUsersName}
-                }));
+                player.scale.x = 1;
+                currentDirection = 2;
+                // myWs.send(JSON.stringify({
+                //     type: "PLAYER_MOVE",
+                //     payload: {direction: 1, xPos: player.x, yPos: player.y, name: thisUsersName}
+                // }));
             }
-            oldX = player.body.x;
-            oldY = player.body.y;
         }
     },
     collect: function (player, collectable) {

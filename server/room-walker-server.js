@@ -8,7 +8,7 @@ var connections = [];
 console.log('server listening...');
 
 const MOVE_AMOUNT = 5;
-const currentPlayer = {xPos: 100, yPos: 270, name:"Jim"};
+const currentPlayer = { xPos: 100, yPos: 270, name: "Jim" };
 
 wss.on('connection', function connection(ws) {
 
@@ -38,7 +38,11 @@ wss.on('connection', function connection(ws) {
 
         switch (JSON.parse(message).type) {
 
-            case 'PLAYER_MOVE': {
+            case 'PLAYER_MOVE':
+            {
+
+                console.log('player wants to move to: ' + JSON.parse(message).payload.xPos + " " +
+                    JSON.parse(message).payload.yPos);
 
                 for (var i = 0; i < connections.length; i++) {
                     if (connections[i].ws === ws) {
@@ -46,24 +50,27 @@ wss.on('connection', function connection(ws) {
                         console.log('updating user');
                         connections[i].xPos = JSON.parse(message).payload.xPos;
                         connections[i].yPos = JSON.parse(message).payload.yPos;
-                        connections[i].direction = JSON.parse(message).payload.direction;
+                        connections[i].directionFacing = JSON.parse(message).payload.direction;
                     }
                 }
 
-                broadcast(JSON.stringify({type:'PLAYER_MOVED',
-                    payload: {
-                    name: JSON.parse(message).payload.name,
-                    xPos: JSON.parse(message).payload.xPos,
-                    yPos: JSON.parse(message).payload.yPos,
-                    direction: JSON.parse(message).payload.direction
-                    }}
+                broadcast(JSON.stringify({
+                        type: 'PLAYER_MOVED',
+                        payload: {
+                            name: JSON.parse(message).payload.name,
+                            xPos: JSON.parse(message).payload.xPos,
+                            yPos: JSON.parse(message).payload.yPos,
+                            direction: JSON.parse(message).payload.direction
+                        }
+                    }
                 ));
 
                 break;
             }
 
 
-            case 'PLAYER_JOIN': {
+            case 'PLAYER_JOIN':
+            {
                 var newPlayerName = JSON.parse(message).payload.name;
                 console.log('a user joined: ' + newPlayerName);
                 var playersAlreadyHere = [];
@@ -92,10 +99,16 @@ wss.on('connection', function connection(ws) {
                 if (playersAlreadyHere.length > 0) {
 
                     console.log('sending USERS_ALREADY_HERE ' + JSON.stringify(playersAlreadyHere));
-                    ws.send(JSON.stringify({type: "USERS_ALREADY_HERE", payload: {otherPlayers: playersAlreadyHere}}))
+                    ws.send(JSON.stringify({
+                        type: "USERS_ALREADY_HERE",
+                        payload: { otherPlayers: playersAlreadyHere }
+                    }))
                 }
 
-                broadcast(JSON.stringify({type: "USER_JOINED", payload: {name: newPlayerName, xPos: 35, yPos: 95}}));
+                broadcast(JSON.stringify({
+                    type: "USER_JOINED",
+                    payload: { name: newPlayerName, xPos: 35, yPos: 95 }
+                }));
 
                 break;
             }
@@ -105,11 +118,20 @@ wss.on('connection', function connection(ws) {
 
     ws.on('close', function (a, b) {
 
+        var quitter;
+
         for (var i = 0; i < connections.length; i++) {
             if (connections[i].ws === ws) {
-                connections.pop(i);
+                quitter = connections.splice(i, 1)[0];
                 console.log('removing connection from array');
             }
+        }
+
+        if (quitter !== null && quitter !== undefined) {
+
+            console.log('quitter is: ' + util.inspect(quitter.name));
+            broadcast(JSON.stringify({ type: "PLAYER_QUIT", payload: { name: quitter.name } }))
+
         }
         console.log('current connections now: ' + connections.length);
     })
@@ -127,7 +149,7 @@ function getCurrentPlayerFromWsConnection(ws) {
 broadcast = function (messageObj) {
     for (var i = 0; i < connections.length; i++) {
 
-        console.log('sending message! ' + messageObj);
+        console.log('sending message! ' + messageObj + ' to ' + connections[i].name);
         connections[i].ws.send(messageObj);
     }
 };
