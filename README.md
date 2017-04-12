@@ -25,7 +25,7 @@ The client, in this case, is an application that runs in the browser and is mean
 
 3) Run Server File.
 
-`node server.js`
+`node room-walker-server.js`
 
 ### Client
 * Note: Make sure server is running before trying to connect from client.
@@ -38,11 +38,12 @@ The client, in this case, is an application that runs in the browser and is mean
 
 `npm install`
 
-3) Run the client file. 
+3) Run a local webserver to host the client.
 
-`node client-v2.js`
+For example, you could use the python simple server:
 
+`python -m SimpleHTTPServer [port]`
 
-## Client V1 vs V2
-The V1 version of the client expects you to send command line arguments when you run the file. The V2 version uses [prompt](https://github.com/flatiron/prompt) to give a more fluid experience for the user because the shell waits for user to submit input. 
+Then navigate in your browser to *http://0.0.0.0:[port]
 
+where you would replace "[port]" with the actual port number you used when starting the server (default is usually 8080). 
