@@ -9,7 +9,7 @@ This project is made up of two parts: the server code and hte client code. The s
 
 The client, in this case, is an application that runs in the browser and is meant to be controlled by a desktop keyboard. When the client loads up, the map appears with no characters. The user can then type his or her name into the input box in the upper left corner and click the "Play!" button. This will create a character on the screen that the user can control. All users who connect to the server join the same room meaning that others can see this user walk around, and from the client you can see other users connected. There is no messaging or attacking in this simple example; you just walk around. ;)
 
-<img src="./Number-Guessing-Game-Screenshot.png" width="800px"/>
+<img src="./Room-Walkers-Demo.gif" width="800px"/>
 
 ## Usage
 
