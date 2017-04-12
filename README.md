@@ -7,7 +7,7 @@ This is the second example in my NodeJs Websockets Online Multiplayer Game serie
 ## What It Is
 This project is made up of two parts: the server code and hte client code. The server code is sort of just a never-ending NodeJS process that you could run on any linux instance (or locally in a command line window to test it out).
 
-The client, in this case, also runs in the command line. When you run the client-v2.js file it should prompt you for your name and then ask you to guess a number. When the server starts up it randomly generates a "magic number", an integer between 1 and 20. The players can then send a guess to the server by entering numbers into the prompt. If the correct number is guessed then a special message is sent out, that user becomes the "new champion", and a new magic number is generated.  
+The client, in this case, is an application that runs in the browser and is meant to be controlled by a desktop keyboard. When the client loads up, the map appears with no characters. The user can then type his or her name into the input box in the upper left corner and click the "Play!" button. This will create a character on the screen that the user can control. All users who connect to the server join the same room meaning that others can see this user walk around, and from the client you can see other users connected. There is no messaging or attacking in this simple example; you just walk around. ;)
 
 <img src="./Number-Guessing-Game-Screenshot.png" width="800px"/>
 
