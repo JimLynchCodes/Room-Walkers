@@ -220,7 +220,7 @@ var myWs;
 TopDownGame.Game.prototype = {
 
     preload: function () {
-        this.game.load.bitmapFont('desyrel', 'assets/fonts/desyrel.png', 'assets/fonts/desyrel.xml');
+        // this.game.load.bitmapFont('desyrel', 'assets/fonts/desyrel.png', 'assets/fonts/desyrel.xml');
     },
     create: function () {
 
@@ -262,7 +262,7 @@ TopDownGame.Game.prototype = {
         //move player with cursor keys
         this.cursors = this.game.input.keyboard.createCursorKeys();
 
-        bmpText = this.game.add.bitmapText(20, 10, 'desyrel', 'Phaser & Pixi\nrocking!', 9);
+        // bmpText = this.game.add.bitmapText(20, 10, 'desyrel', 'Phaser & Pixi\nrocking!', 9);
 
         game = this.game;
 
