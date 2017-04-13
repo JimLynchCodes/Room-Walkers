@@ -168,7 +168,7 @@ function connectToServer() {
                     if (players[i].name === JSON.parse(event.data).payload.name) {
                         console.log('destroying user! ' + players[i].name);
                         players[i].destroy();
-                        players[i].splice(i, 1);
+                        players.splice(i, 1);
                     }
                 }
 
@@ -207,7 +207,7 @@ TopDownGame.Game.prototype = {
         //resizes the game world to match the layer dimensions
         this.backgroundlayer.resizeWorld();
 
-        this.createItems();
+        // this.createItems();
         this.createDoors();
 
         //create player
