@@ -13,6 +13,9 @@ var game;
 var players = [];
 var thisUsersName = "--";
 var currentDirection = 1;
+var style = { font: "9px Arial", fill: "#ffffff", wordWrap: true, wordWrapWidth: "20px", align: "center",
+             fontWeight: "1"};
+var text;
 
 function connectToServer() {
     ws = new WebSocket('ws://127.0.0.1:8889');
@@ -67,11 +70,26 @@ function connectToServer() {
 
                     var newPlayer = game.add.sprite(JSON.parse(event.data).payload.xPos, JSON.parse(event.data).payload.yPos, 'player');
                     game.physics.arcade.enable(newPlayer);
-                    // newPlayer.pivot.y.setTo(0, 0.5);
-                    // newPlayer.pivot.x.setTo(0, 0.5);
+
                     newPlayer.name = JSON.parse(event.data).payload.name;
-                        newPlayer.anchor.setTo(0.5, 0.5);
+                    newPlayer.anchor.setTo(0.5, 0.5);
+                    var text = game.add.text(0, 0, newPlayer.name, style);
+                    text.anchor.set(0.5);
+                    newPlayer.text = text;
+
+                    var otherText = game.add.text(70, 380, "TOUCH TO\nSTART", {font: "8px Orbitron", align:"center", fill:"#fff"});
+
+                    otherText.x = Math.floor(newPlayer.x);
+                    otherText.y = Math.floor(newPlayer.y - 15);
+
+                    // newPlayer.text.x = Math.floor(newPlayer.x);
+                    // newPlayer.text.y = Math.floor(newPlayer.y - 15);
+
                     players.push(newPlayer);
+
+
+
+
                     // newPlayer.body.anchor.setTo(0.5, 0.5);
 
                     // newPlayer.pivot.y = newPlayerewPlayer.height * .5;
@@ -113,6 +131,11 @@ function connectToServer() {
 
                         players[i].y = JSON.parse(event.data).payload.yPos;
                         players[i].x = JSON.parse(event.data).payload.xPos;
+
+
+                        players[i].text.x = Math.floor(JSON.parse(event.data).payload.xPos + players[i].width / 2);
+                        players[i].text.y = Math.floor(JSON.parse(event.data).payload.yPos - 15);
+
                 console.log('putting player at x:' + players[i].body.x + " and y:" + players[i].body.y);
 
                         if (JSON.parse(event.data).payload.direction === 2) {
@@ -144,6 +167,11 @@ function connectToServer() {
                     game.physics.arcade.enable(newPlayer);
                     newPlayer.anchor.setTo(0.5, 0.5);
                     newPlayer.name = JSON.parse(event.data).payload.otherPlayers[i].name;
+                    var text = game.add.text(0, 0, newPlayer.name, style);
+                    text.anchor.set(0.5);
+                    newPlayer.text = text;
+                    newPlayer.text.x = Math.floor(newPlayer.x);
+                    newPlayer.text.y = Math.floor(newPlayer.y - 15);
                     players.push(newPlayer);
 
                     if (JSON.parse(event.data).payload.otherPlayers[i].directionFacing === 2) {
@@ -191,6 +219,10 @@ TopDownGame.Game.prototype = {
     create: function () {
 
         myWs = connectToServer();
+
+        // game.renderer.renderSession.roundPixels = true;
+
+
 
         this.map = this.game.add.tilemap('level1');
 
@@ -272,7 +304,14 @@ TopDownGame.Game.prototype = {
         });
     },
     update: function () {
+
+        game.renderer.renderSession.roundPixels = true;
+
         if (player) {
+
+            player.text.x = Math.floor(player.x + player.width / 2);
+            player.text.y = Math.floor(player.y - 15);
+
             //collision
             this.game.physics.arcade.collide(player, this.blockedLayer);
             this.game.physics.arcade.overlap(player, this.items, this.collect, null, this);
