@@ -19,7 +19,8 @@ var text;
 var bmpText;
 
 function connectToServer() {
-    ws = new WebSocket('ws://127.0.0.1:8889');
+    // ws = new WebSocket('ws://127.0.0.1:8889');
+    ws = new WebSocket('ws://104.196.54.87:8889');
 
     console.log('connecting to server...');
 
