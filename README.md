@@ -47,3 +47,7 @@ For example, you could use the python simple server:
 Then navigate in your browser to *http://0.0.0.0:[port]
 
 where you would replace "[port]" with the actual port number you used when starting the server (default is usually 8080). 
+
+---
+
+This project became the basis for a private game I created called [Game of Ninja](gameof.ninja).
