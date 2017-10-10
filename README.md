@@ -50,4 +50,4 @@ where you would replace "[port]" with the actual port number you used when start
 
 ---
 
-This project became the basis for a private game I created called [Game of Ninja](gameof.ninja).
+This project became the basis for a game I created called [Game of Ninja](gameof.ninja).
